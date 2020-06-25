@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>Click "Try it". Wait 3 seconds, and the page will alert "Hello".</p>
+
+<button onclick="action()">Try it</button>
+
+<button onclick="cancel()">Cancel</button>
+
+
+
+<script>
+    var timer;
+    function action (){
+        timer = setTimeout(myFunction, 3000);
+    }
+
+    function myFunction() {
+        alert('Hello');
+    }
+
+    function cancel() {
+clearTimeout(timer);
+    }
+
+</script>
+
+</body>
+</html>

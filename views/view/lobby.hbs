@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Chris">
+    <meta name="generator" content="Jekyll v4.0.1">
+    <title>Filexpress</title>
+
+    <link rel = "icon" href = "/img/file.png"  type = "image/png">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/lobby.css">
+
+
+
+</head>
+
+<body class="text-center">
+<div class="form-signin">
+
+    <form action="/" method="POST" autocomplete="off" id="myForm">
+        <h1 style="margin-bottom: 50px"><b>Filexpress</b></h1>
+        <img class="mb-4" src="/img/file.png" alt="" width="102" height="102">
+
+        <div>
+            <label for="inputEmail" class="sr-only">Username</label>
+            <input type="text"  id= "username" name="username"  class="form-control" placeholder="Username" required autofocus>
+        </div>
+
+
+        <div class="btn-group" role="group" aria-label="Basic example" style="margin-top: 30px">
+            <button type="button" class="btn btn-secondary" id="create">Create Room</button>
+            <button type="button" class="btn btn-secondary" id="join">Join Room</button>
+        </div>
+
+
+        <div style="margin-top: 30px">
+            <input type="hidden" id="method" name="method" value="join" />
+
+            <div class="selection"  id="create-content" >
+                <input type="password" id="password" class="form-control" placeholder="Password"  name="password" autofocus>
+                <button type="submit" class="btn btn-primary" style="margin-top: 20px">Create new room</button>
+            </div>
+
+
+            <div class="selection" id="join-content">
+                <label for="inputEmail" class="sr-only">Room Number</label>
+                <input type="number" id="room" class="form-control" placeholder="Room Number"  name="room" autofocus>
+                <input type="password" id="password" class="form-control" placeholder="Password"  name="password" autofocus>
+                <error></error>  <br>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 50%" >Join</button>
+            </div>
+        </div>
+
+    </form>
+
+
+</div>
+</body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+
+<script>
+    var error = '{{error}}';
+
+    $('#create').click(function() {
+        $('#create-content').css("display", "block");
+        $('#join-content').css("display", "none");
+        $('#method').val('create');
+    });
+
+    $('#join').click(function() {
+        $('#create-content').css("display", "none");
+        $('#join-content').css("display", "block");
+        $('#method').val('join');
+    });
+
+    $('#create').click();
+
+    if(error){
+        $('#join').click();
+        $('#room').css("box-shadow", "0 0 8px red");
+        $('error').text("{{error}}");
+    }
+
+    $('body').click(function(){
+        $('#room').css("box-shadow", "");
+    })
+
+</script>
+
+
+
