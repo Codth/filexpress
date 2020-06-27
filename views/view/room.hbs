@@ -1,7 +1,3 @@
-<!--&lt;!&ndash;Bootstrap Select&ndash;&gt;-->
-<!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">-->
-<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>-->
-
 
 <!--FilePond-->
 <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
@@ -26,28 +22,28 @@
 <div class = "card" style="text-align: center">
 
 <!--    <data-max-file-size="3MB">-->
-    <form action="/room?num={{code}}" method="post"   encType="multipart/form-data">
-    <div style="  margin: 4em auto 0; width: 60%;">
-        <input type="file"
-               class="filepond"
-               name="item"
-               id="item"
-               multiple="true">
-    </div>
+<!--    <form action="/upload?num={{code}}" method="post"   encType="multipart/form-data">-->
+        <div style="  margin: 4em auto 0; width: 60%;">
+            <input type="file"
+                   class="filepond"
+                   name="item"
+                   id="item"
+                   multiple
+                   data-allow-reorder="true">
+        </div>
 
+        <div style="float: left">
+            <span>Expire</span>
+            <select class="custom-select" id="inputGroupSelect02" name="expire">
+                <option selected value="0">1 hour</option>
+                <option value="1">3 hours</option>
+                <option value="2">1 day</option>
+                <option value="3">3 days</option>
+            </select>
+        </div>
 
-    <div style="float: left">
-        <span>Expire</span>
-        <select class="custom-select" id="inputGroupSelect02" name="expire">
-            <option selected value="0">1 hour</option>
-            <option value="1">3 hours</option>
-            <option value="2">1 day</option>
-            <option value="3">3 days</option>
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-secondary">Upload</button>
-    </form>
+<!--        <button type="submit" class="btn btn-secondary">Upload</button>-->
+<!--    </form>-->
 
 </div>
 
@@ -57,25 +53,22 @@
 <div class="card" style="margin-top: 30px">
 
     <div style="width: 90%; text-align: center">
-        <div class="results" style="margin-top: 30px; font-size: large">
+        <div class="results" style="margin-top: 30px; font-size: large; display: grid">
 
 {{#each data}}
-                <div>
+                <div style="width: 90%">
                         <div class="tooltip">
-<!--                            <a  href="/download/{{this.id}}" download> <img src="/img/doc.png" style="width: 90%"> </a>-->
-                            <a  href="{{this.obj}}" download> <img src="/img/doc.png" style="width: 90%"> </a>
+                            <a  href="/download/{{this.id}}" download> <img src="/img/doc.png" style="width: 80%"> </a>
                             <span class="tooltiptext">
                                 Upload time: <span class="date"> {{this.date}}</span> <br>
                                 Size:  <span> {{this.size}}</span>
                             </span>
                         </div>
-                    <p> <a href="#0" onclick="post('{{this.id}}')"> {{this.name}} </a></p>
-                    </a>
+                    <p> <a  href="/download/{{this.id}}" download> {{this.name}} </a></p>
+                    <button type="button" class="btn btn-outline-danger" onclick="onDelete('{{this.id}}')">Delete</button>
                 </div>
 
     {{/each}}
-
-
 
         </div>
     </div>
@@ -93,9 +86,34 @@
             FilePondPluginImageOverlay
     );
 
-    FilePond.create(
-        document.querySelector('#item')
+    FilePond.setOptions({
+        server: {
+            url: '/api',
+            process: {
+                url: '/',
+                method: 'POST',
+                withCredentials: false,
+                headers: {},
+                onload: null,
+                onerror: null
+            }
+        }
+    });
+
+    var pond = FilePond.create(
+         document.querySelector('#item')
     );
+
+    pond.on('processfile', (error, file) => {
+        if (error) {
+            console.log(error);
+            return;
+        }
+        console.log('File processed', file);
+    });
+
+
+
 </script>
 
 <script>
@@ -104,8 +122,7 @@
     $('.date').text(getDate(text).toString());
 
 
-    function  getDate(date) {
-
+    function getDate(date) {
         let arr = date.split(" ");
         console.log(arr);
         let res = "" + arr[1] + " " + arr[2] + ", " + arr[3] + " " + arr[4];
@@ -113,46 +130,31 @@
     }
 
 
-    function post(id) {
-        let request = new XMLHttpRequest();
-        // function success(text) {
-        //     document.getElementById('msg').innerText=text;
-        //     location.reload();
-        // }
-        //
-        // if(request!=null){
-        //     request.onreadystatechange = function() {
-        //         if(request.readyState==4&&request.status==200){
-        //             var text=request.responseText;
-        //             success(text);
-        //         }
-        //     };
-        // }
 
-        request.open('POST', '/download', true);
+    function onDelete(id){
+        let request = new XMLHttpRequest();
+        function success(text) {
+            location.reload();
+        }
+
+        if(request!=null){
+            request.onreadystatechange = function() {
+                if(request.readyState==4&&request.status==200){
+                    var text=request.responseText;
+                    success(text);
+                }
+            };
+        }
+
+        request.open('DELETE', '/download', true);
         var  obj={
-            id:id
+            id:id,
+            code: {{code}}
         };
         request.send(JSON.stringify(obj));
-        //
-        // fetch('/route' , {
-        //     method: 'GET',
-        //     body: id
-        // });
+
     }
 
-
-    // fetch('/route', {
-    //     method: 'POST',
-    //     body: 'My HTML String' // Would define object and stringify.
-    // })
-    //         .then(res => res.text())
-    //         .then(base64String => {
-    //             const anchorTag = document.createElement('a');
-    //             anchorTag.href = base64String;
-    //             anchorTag.download = "My PDF File.txt";
-    //             anchorTag.click();
-    //         });
 
 
 </script>

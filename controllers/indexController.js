@@ -6,10 +6,14 @@ const File = mongoose.model('File');
 var fs = require('fs');
 var atob = require('atob');
 var Blob = require('blob');
-var multer  = require('multer')
-var upload = multer({ dest: '/' })
 
+var FilePond = require('filepond')
 
+FilePond.setOptions({
+    server: {
+        chunkUploads: true
+    }
+});
 
 router.get('/', (req, res) => {
     res.render("view/lobby", {
@@ -48,41 +52,16 @@ router.post('/', (req, res) => {
             room.code = code;
             room.password = password;
             room.save();
-            res.render("view/room", {
-                viewTitle: "Room",
-                code: code,
-                username : username,
-                method: method
-            });
+            res.redirect('/room?code=' + code + '&username=' +username);
+
+
         });
     }else if(method == 'join'){
         code = req.body.room;
+
         Room.findOne({code: code},(err, docs) => {
             if(docs){
-                // Room.find({code: code}).populate('item', 'id name date size')
-                Room.find({code: code}).populate('item')
-                    .exec(function (err, doc) {
-                        var arr = [];
-                        let length = doc[0].item.length;
-                        for(var i =0; i<length; i++){
-                            arr.push(doc[0].item[i])
-                        }
-                        res.render("view/room", {
-                            viewTitle: "Room",
-                            code: code,
-                            username : username,
-                            method: method,
-                            data: arr
-                        });
-
-                    });
-
-
-
-
-
-
-
+                res.redirect('/room?code=' + code + '&username=' +username);
             }else{
                 res.render("view/lobby", {
                     viewTitle: "Lobby",
@@ -93,15 +72,40 @@ router.post('/', (req, res) => {
                     layout: false
                 });
             }
-
-
-
         });
     }
 });
 
 
-router.post('/room',  (req, res) => {
+router.get('/room', (req, res) => {
+    let code = req.query.code;
+    let username = req.query.username;
+
+    Room.find({code: code}).populate('item')
+        .exec(function (err, doc) {
+            var arr = [];
+            let length = doc[0].item.length;
+            for(var i =0; i<length; i++){
+                arr.push(doc[0].item[i])
+            }
+            res.render("view/room", {
+                viewTitle: "Room",
+                code: code,
+                username : username,
+                data: arr
+            });
+
+        });
+
+});
+
+router.post('/api', (req, res) => {
+    let item = req.files.item;
+    console.log(item.data.toString('base64'));
+
+});
+
+router.post('/upload', (req, res) => {
     let code = req.query.num;
     let expire = req.body.expire;
 
@@ -120,15 +124,16 @@ router.post('/room',  (req, res) => {
             break;
     }
 
-    item = req.body.item;
+    let item = req.body.item;
     if(typeof item == "string"){
-        console.log(JSON.stringify(req.body.item));
-        let upload = JSON.parse(req.body.item);
+        let thing = req.files.item;
+        console.log(thing);
+        let upload =  JSON.parse(item);
         let data = "data:" + upload.type + ";charset=utf-8;base64," + upload.data.toString('base64');
         let type = upload.type;
         let name = upload.name;
         let size = upload.size;
-        saveData(data,name,expire,code,size);
+        // saveData(data,name,expire,code,size);
 
     }else{
         for(var i =0; i<item.length; i++){
@@ -141,42 +146,43 @@ router.post('/room',  (req, res) => {
         }
     }
 
+    res.redirect('/room?code=' + code);
+
+
 });
 
-function dataURItoBlob(dataURI) {
-    // convert base64/URLEncoded data component to raw binary data held in a string
-    var byteString;
-    if (dataURI.split(',')[0].indexOf('base64') >= 0)
-        byteString = atob(dataURI.split(',')[1]);
-    else
-        byteString = unescape(dataURI.split(',')[1]);
 
-    // separate out the mime component
-    var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
-    // write the bytes of the string to a typed array
-    var ia = new Uint8Array(byteString.length);
-    for (var i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-
-    return new Blob([ia], {type:mimeString});
+function urltoFile(url, filename, mimeType){
+    return (fetch(url)
+            .then(function(res){return res.arrayBuffer();})
+            .then(function(buf){return new File([buf], filename,{type:mimeType});})
+    );
 }
-//
+
+
 //
 router.get('/download/:id', (req,res) => {
     let id = req.params.id;
     File.findOne({_id: id}, function (err,file) {
         let mime = file.obj.split(',')[0].split(':')[1].split(';')[0];
         console.log(mime);
-        let content = unescape(encodeURIComponent(file.obj.split(',')[1]));
-        content = Buffer.from(content, 'base64').toString();
 
-        console.log(content);
+        let content = unescape(encodeURIComponent(file.obj.split(',')[1]));
+
+        // content = new Buffer(content, 'base64');
+        content = Buffer.from(content, 'base64');
 
         let temp = mime + ";charset=UTF-8";
         res.set('Content-Type', temp);
-        res.set('Content-Disposition','attachment; filename=' + file.name );
+
+        console.log(file.name);
+
+        try{
+            res.set('Content-Disposition','attachment; filename=' + file.name );
+        }catch{
+        }
+
         res.send(content);
 
     });
@@ -184,42 +190,32 @@ router.get('/download/:id', (req,res) => {
 });
 
 
-// router.post('/download', (req,res) => {
-//     req.on('data',function(data) {
-//         obj=JSON.parse(data);
-//         let id =obj.id;
-//
-//         File.findOne({_id: id}, function (err,file) {
-//             // var stream = fs.createWriteStream(file.name, {flags: 'a'});
-//             // var data = file.obj;
-//             // stream.write(data, function() {
-//             //     // Now the data has been written.
-//             // });
-//             res.send(file.obj);
-//
-//         });
-//
-//     });
-//
-// });
-//
-// router.get('/route', (req, res) => {
-//
-//
-//     File.findOne({_id: res.body }, function (err,file) {
-//
-//         res.send(file.obj);
-//
-//     });
-//     //
-//     // fs.readFile('./myPDF.pdf', (err, data) => {
-//     //     if (err) res.status(500).send(err);
-//     //     res.contentType('application/pdf')
-//     //         .send(`data:application/pdf;base64,${new Buffer.from(data).toString('base64')}`);
-//     // });
-//
-// });
-//
+
+router.delete('/download', (req,res) => {
+
+    req.on('data', function (data) {
+        obj = JSON.parse(data);
+
+        let id = obj.id;
+        let code = obj.code;
+
+
+        File.deleteOne({ _id: id }, function (err) {
+            if (err) return handleError(err);
+        });
+
+        Room.findOne({code: code}, function(err,doc){
+            const index = doc.item.indexOf(id);
+            doc.item.splice(index, 1);
+            doc.save();
+        });
+
+        res.send('successed');
+
+
+    });
+
+});
 
 
 
