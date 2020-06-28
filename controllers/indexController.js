@@ -143,59 +143,11 @@ router.post('/api', (req, res) => {
         let size = sampleFile.size;
 
         saveData(data,name,expire,code,size);
-        res.redirect(req.get('referer'));
-
+        res.redirect('/room');
     });
 
-
-
 });
 
-router.post('/upload', (req, res) => {
-    let code = req.query.num;
-    let expire = req.body.expire;
-
-    switch(true){
-        case(expire == "0"):
-            expire = 86400;
-            break;
-        case(expire == "1"):
-            expire = 10800;
-            break;
-        case(expire == "2"):
-            expire = 86400;
-            break;
-        case(expire == "3"):
-            expire = 259200;
-            break;
-    }
-
-    let item = req.body.item;
-    if(typeof item == "string"){
-        let thing = req.files.item;
-        console.log(thing);
-        let upload =  JSON.parse(item);
-        let data = "data:" + upload.type + ";charset=utf-8;base64," + upload.data.toString('base64');
-        let type = upload.type;
-        let name = upload.name;
-        let size = upload.size;
-        // saveData(data,name,expire,code,size);
-
-    }else{
-        for(var i =0; i<item.length; i++){
-            let upload = JSON.parse(item[i]);
-            let data = "data:" + upload.type + ";charset=utf-8;base64," + upload.data.toString('base64');
-            let type = upload.type;
-            let name = upload.name;
-            let size = upload.size;
-            saveData(data,name,expire,code,size);
-        }
-    }
-
-    res.redirect('/room?code=' + code);
-
-
-});
 
 router.get('/room/logout', (req, res) =>{
     req.logout();

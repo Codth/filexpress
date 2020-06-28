@@ -5,6 +5,7 @@ const bodyparser = require('body-parser');
 var express = require('express');
 var app = express();
 var path = require('path');
+var flash = require('connect-flash');
 
 const passport = require('passport');
 const session = require('express-session');
@@ -40,6 +41,7 @@ app.use(
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(flash());
 
 app.use(fileUpload());
 app.use(bodyparser.urlencoded({
