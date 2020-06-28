@@ -37,17 +37,17 @@
             <input type="hidden" id="method" name="method" value="join" />
 
             <div class="selection"  id="create-content" >
-                <input type="password" id="password" class="form-control" placeholder="Password"  name="password" autofocus>
+                <input type="password" id="password" class="form-control" placeholder="Password"  name="password_create" autofocus>
                 <button type="submit" class="btn btn-primary" style="margin-top: 20px">Create new room</button>
             </div>
 
 
             <div class="selection" id="join-content">
                 <label for="inputEmail" class="sr-only">Room Number</label>
-                <input type="number" id="room" class="form-control" placeholder="Room Number"  name="room" autofocus>
-                <input type="password" id="password" class="form-control" placeholder="Password"  name="password" autofocus>
+                <input type="number" id="username" class="form-control" placeholder="Room Number"  name="username"  value="{{username}}" autofocus>
+                <input type="password" id="password" class="form-control" placeholder="Password"  name="password" value="{{password}}" autofocus>
                 <error></error>  <br>
-                    <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 50%" >Join</button>
+                    <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 50%"  id="joinButton">Join</button>
             </div>
         </div>
 
@@ -85,7 +85,12 @@
 
     $('body').click(function(){
         $('#room').css("box-shadow", "");
-    })
+    });
+
+    if({{indicator}}){
+        $('#join').click();
+        $('#joinButton').click();
+    }
 
 </script>
 

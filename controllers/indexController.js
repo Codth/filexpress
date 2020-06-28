@@ -3,90 +3,103 @@ var router = express.Router();
 const mongoose = require('mongoose');
 const Room = mongoose.model('Room');
 const File = mongoose.model('File');
-var fs = require('fs');
-var atob = require('atob');
-var Blob = require('blob');
 
-var FilePond = require('filepond')
 
-FilePond.setOptions({
-    server: {
-        chunkUploads: true
-    }
-});
+const bcrypt = require('bcryptjs');
+const passport = require('passport');
+const { ensureAuthenticated, forwardAuthenticated } = require('../config/auth');
 
-router.get('/', (req, res) => {
+router.get('/',  forwardAuthenticated, (req, res) => {
     res.render("view/lobby", {
         viewTitle: "Lobby",
-        layout: false
+        layout: false,
+        indicator: false
     });
 });
 
 
-router.post('/', (req, res) => {
+router.post('/', (req, res,next) => {
     let username = req.body.username;
-    let password = req.body.password;
-    let method = req.body.method;
-    let code;
+    let password;
 
-    if(method == 'create'){
+    if (req.body.password) {
+        password = req.body.password;
+        let code = req.body.username;
+
+        passport.authenticate('local', {
+            successRedirect: '/room',
+            failureRedirect: '/users/login',
+            failureFlash: true
+        })(req, res, next);
+
+
+    } else {
+        let password = req.body.password_create;
+        let code;
+
         var arr = [];
         Room.find((err, docs) => {
-            for(var i =0; i<docs.length; i++){
+            for (var i = 0; i < docs.length; i++) {
                 arr.push(docs[i].set);
             }
 
-            var room = new Room();
-            while(true){
+            while (true) {
                 let hasExisted = false;
                 code = Math.floor(Math.random() * 8999) + 1000; // returns a random integer from 1 to 100
-                for(var i =0; i<arr.length; i++){
-                    if(arr[i] == code){
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i] == code) {
                         hasExisted = true;
                         break;
                     }
                 }
-                if(!hasExisted) break;
+                if (!hasExisted) break;
             }
 
+            var room = new Room();
             room.code = code;
             room.password = password;
-            room.save();
-            res.redirect('/room?code=' + code + '&username=' +username);
 
-
-        });
-    }else if(method == 'join'){
-        code = req.body.room;
-
-        Room.findOne({code: code},(err, docs) => {
-            if(docs){
-                res.redirect('/room?code=' + code + '&username=' +username);
-            }else{
-                res.render("view/lobby", {
-                    viewTitle: "Lobby",
-                    code: code,
-                    username : username,
-                    method: method,
-                    error: 'Room does not exist',
-                    layout: false
+            bcrypt.genSalt(10, (err, salt) => {
+                bcrypt.hash(room.password, salt, (err, hash) => {
+                    if (err) throw err;
+                    room.password = hash;
+                    room.save();
                 });
-            }
+            });
+
+            res.render("view/lobby", {
+                viewTitle: "Lobby",
+                layout: false,
+                username: code,
+                password: password,
+                indicator: true
+            });
+
+
+
+
         });
     }
+
 });
 
 
-router.get('/room', (req, res) => {
-    let code = req.query.code;
+
+
+
+router.get('/room', ensureAuthenticated, (req, res) => {
+    let code = req.user.code;
     let username = req.query.username;
 
     Room.find({code: code}).populate('item')
         .exec(function (err, doc) {
+            console.log(doc)
             var arr = [];
-            let length = doc[0].item.length;
-            for(var i =0; i<length; i++){
-                arr.push(doc[0].item[i])
+            if(doc.length != 0){
+                let length = doc[0].item.length;
+                for(var i =0; i<length; i++){
+                    arr.push(doc[0].item[i])
+                }
             }
             res.render("view/room", {
                 viewTitle: "Room",
@@ -100,8 +113,41 @@ router.get('/room', (req, res) => {
 });
 
 router.post('/api', (req, res) => {
-    let item = req.files.item;
-    console.log(item.data.toString('base64'));
+    let code = req.user.code;
+
+    if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).send('No files were uploaded.');
+    }
+
+    let expire = req.body.expire;
+
+    switch(true){
+        case(expire == "0"):
+            expire = 86400;
+            break;
+        case(expire == "1"):
+            expire = 10800;
+            break;
+        case(expire == "2"):
+            expire = 86400;
+            break;
+        case(expire == "3"):
+            expire = 259200;
+            break;
+    }
+
+    Object.keys(req.files).forEach(function(key) {
+        var sampleFile = req.files[key];
+        let data = "data:" + sampleFile.mimetype + ";charset=utf-8;base64," + sampleFile.data.toString('base64');
+        let name = sampleFile.name;
+        let size = sampleFile.size;
+
+        saveData(data,name,expire,code,size);
+        res.redirect(req.get('referer'));
+
+    });
+
+
 
 });
 
@@ -151,18 +197,16 @@ router.post('/upload', (req, res) => {
 
 });
 
+router.get('/room/logout', (req, res) =>{
+    req.logout();
+    res.redirect('/');
+});
 
 
-function urltoFile(url, filename, mimeType){
-    return (fetch(url)
-            .then(function(res){return res.arrayBuffer();})
-            .then(function(buf){return new File([buf], filename,{type:mimeType});})
-    );
-}
 
 
-//
-router.get('/download/:id', (req,res) => {
+
+router.get('/download/:id',ensureAuthenticated, (req,res) => {
     let id = req.params.id;
     File.findOne({_id: id}, function (err,file) {
         let mime = file.obj.split(',')[0].split(':')[1].split(';')[0];
@@ -228,18 +272,22 @@ function getDate(){
     return res;
 }
 
+
 // Save data to DB
 function saveData(data, name, expire,code,size){
     var file = new File();
+
     file.obj = data;
     file.name = name;
     file.createdAt.expires = expire.toString();
     file.date = Date();
     file.size = size;
+    file.front_type = name.split(".")[1];
 
 
     file.save(function (err, doc1){
         if(!err){
+            console.log(code);
             Room.findOne({code: code}, function(err,doc2){
                 doc2.item.push(doc1.id);
                 doc2.save();

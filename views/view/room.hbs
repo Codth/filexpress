@@ -1,49 +1,70 @@
-
-<!--FilePond-->
-<link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
-<script src="https://unpkg.com/filepond/dist/filepond.js"></script>
-<script src="https://unpkg.com/filepond-plugin-file-encode/dist/filepond-plugin-file-encode.js"></script>
-<script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
-
-
-<link href="https://nielsboogaard.github.io/filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.css" rel="stylesheet">
-<script src="https://nielsboogaard.github.io/filepond-plugin-image-overlay/dist/filepond-plugin-image-overlay.js"></script>
-<script src="/filepond/filepond-plugin-get-file.js"></script>
-<link href="/filepond/filepond-plugin-get-file.css" rel="stylesheet">
-
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
 <link rel="stylesheet" href="/css/room.css">
 
 <div class="card" style="margin-top: 10px">
-    <h3> Code: <span id="code">{{code}}</span></h3>
+
+
+
+    <div class="row">
+        <h3> Code: <span id="code">{{code}}</span></h3>
+        <a href="/room/logout" class="btn btn-outline-danger" style="margin-left: 100px">Logout</a>
+    </div>
+
 </div>
 
-<div class = "card" style="text-align: center">
+<div class = "card" style="text-align: center; width: 100%">
 
-<!--    <data-max-file-size="3MB">-->
-<!--    <form action="/upload?num={{code}}" method="post"   encType="multipart/form-data">-->
-        <div style="  margin: 4em auto 0; width: 60%;">
-            <input type="file"
-                   class="filepond"
-                   name="item"
-                   id="item"
-                   multiple
-                   data-allow-reorder="true">
+
+    <form ref='uploadForm'
+          id='uploadForm'
+          action="/api"
+          method='post'
+          encType="multipart/form-data">
+
+        <div class="row">
+
+            <div class="col-2" style="text-align: center">
+                <div>
+                    <span>Expire</span>
+                    <select class="custom-select" id="inputGroupSelect02" name="expire">
+                        <option selected value="0">1 hour</option>
+                        <option value="1">3 hours</option>
+                        <option value="2">1 day</option>
+                        <option value="3">3 days</option>
+                    </select>
+                </div>
+            </div>
+
+
+            <div class="col-8" style="text-align: center">
+                <div style="">
+                    <div id = 'vue2'>
+                        <table class="table">
+                            <tbody>
+                            <tr>
+                                Upload a file, or choose a file you've already uploaded.
+                            </tr>
+                            <div name = 'number' style="display: none"> \{{count}}</div>
+                            <div v-for="item in selectname" style="margin-top: 20px; text-align: center">
+                                <span v-html="item"></span>
+                            </div>
+                            </tbody>
+                        </table>
+
+                        <a class="fa fa-plus fa-lg" v-on:click="addOne" style="color: dodgerblue" href="#"></a>
+
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-secondary" style="margin-top: 20px">Upload</button>
+            </div>
+
+            <div class="col-2" style="text-align: center">
+            </div>
         </div>
 
-        <div style="float: left">
-            <span>Expire</span>
-            <select class="custom-select" id="inputGroupSelect02" name="expire">
-                <option selected value="0">1 hour</option>
-                <option value="1">3 hours</option>
-                <option value="2">1 day</option>
-                <option value="3">3 days</option>
-            </select>
-        </div>
 
-<!--        <button type="submit" class="btn btn-secondary">Upload</button>-->
-<!--    </form>-->
+    </form>
 
 </div>
 
@@ -58,7 +79,7 @@
 {{#each data}}
                 <div style="width: 90%">
                         <div class="tooltip">
-                            <a  href="/download/{{this.id}}" download> <img src="/img/doc.png" style="width: 80%"> </a>
+                            <a  href="/download/{{this.id}}" download> <img src="/img/{{this.front_type}}.png" style="width: 80%"> </a>
                             <span class="tooltiptext">
                                 Upload time: <span class="date"> {{this.date}}</span> <br>
                                 Size:  <span> {{this.size}}</span>
@@ -76,45 +97,44 @@
 </div>
 
 
-<script>
-    FilePond.registerPlugin(
-            // encodes the file as base64 data
-            FilePondPluginFileEncode,
-            // validates the size of the file
-            FilePondPluginFileValidateSize,
-            FilePondPluginGetFile,
-            FilePondPluginImageOverlay
-    );
 
-    FilePond.setOptions({
-        server: {
-            url: '/api',
-            process: {
-                url: '/',
-                method: 'POST',
-                withCredentials: false,
-                headers: {},
-                onload: null,
-                onerror: null
+
+<style>
+    serialTarget{}
+</style>
+
+<script>
+    var example2 = new Vue({
+        el: '#vue2',
+        data: {
+            selectname: ['<div class = "tags" id = "tag0"> <tr><td> <input type="file" name="0" />    <a  href="#" class="fa fa-times fa-lg" style="color: red" onclick="deleteOne('+0+')"></a> </td></tr></div>'],
+            count: 1
+        },
+        methods: {
+            addOne: function (e) {
+                let templet = '<div class = "tags" id = "tag'+this.count+'"><tr><td> <input class = "serialTarget" type="file" name= "'+this.count+'"/>' +
+                        '  <a href="#" class="fa fa-times fa-lg" style="color: red" onclick="deleteOne('+this.count+')"></a></td></tr> </div>';
+                this.selectname.push(templet);
+                this.count += 1;
             }
         }
     });
 
-    var pond = FilePond.create(
-         document.querySelector('#item')
-    );
-
-    pond.on('processfile', (error, file) => {
-        if (error) {
-            console.log(error);
-            return;
+    function deleteOne(index){
+        let size  =document.getElementsByClassName('tags').length;
+        if(size >1){
+            let id = 'tag' + index;
+            document.getElementById(id).parentElement.parentElement.remove();
         }
-        console.log('File processed', file);
+    }
+
+
+    $(".custom-file-input").on("change", function() {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
     });
-
-
-
 </script>
+
 
 <script>
 
