@@ -58,10 +58,14 @@
 {{#each data}}
                 <div style="width: 90%">
                         <div class="tooltip">
+<<<<<<< Updated upstream
                             <a  href="/download/{{this.id}}" download> <img src="/img/doc.png" style="width: 80%"> </a>
+=======
+                            <a  href="/download/{{this.id}}" download> <img class='icons' src="/img/{{this.front_type}}.png" style="width: 80%"> </a>
+>>>>>>> Stashed changes
                             <span class="tooltiptext">
                                 Upload time: <span class="date"> {{this.date}}</span> <br>
-                                Size:  <span> {{this.size}}</span>
+                                Size:  <span class="size"> {{this.size}} </span>
                             </span>
                         </div>
                     <p> <a  href="/download/{{this.id}}" download> {{this.name}} </a></p>
@@ -76,6 +80,16 @@
 </div>
 
 
+<<<<<<< Updated upstream
+=======
+
+
+<style>
+    serialTarget{}
+</style>
+
+
+>>>>>>> Stashed changes
 <script>
     FilePond.registerPlugin(
             // encodes the file as base64 data
@@ -100,6 +114,7 @@
         }
     });
 
+<<<<<<< Updated upstream
     var pond = FilePond.create(
          document.querySelector('#item')
     );
@@ -108,6 +123,18 @@
         if (error) {
             console.log(error);
             return;
+=======
+
+
+
+
+
+    function deleteOne(index){
+        let size  =document.getElementsByClassName('tags').length;
+        if(size >1){
+            let id = 'tag' + index;
+            document.getElementById(id).parentElement.parentElement.remove();
+>>>>>>> Stashed changes
         }
         console.log('File processed', file);
     });

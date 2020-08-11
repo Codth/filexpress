@@ -18,6 +18,18 @@ var fileSchema = new mongoose.Schema({
         type: Date,
         expires: String,
         default: Date.now
+<<<<<<< Updated upstream
+=======
+    },
+    mime:{
+        type: String
+    },
+    code:{
+        type: Number
+    },
+    front_type:{
+        type: String
+>>>>>>> Stashed changes
     }
 });
 

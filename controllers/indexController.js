@@ -124,6 +124,7 @@ router.post('/upload', (req, res) => {
             break;
     }
 
+<<<<<<< Updated upstream
     let item = req.body.item;
     if(typeof item == "string"){
         let thing = req.files.item;
@@ -145,6 +146,23 @@ router.post('/upload', (req, res) => {
             saveData(data,name,expire,code,size);
         }
     }
+=======
+    Object.keys(req.files).forEach(function(key) {
+        var sampleFile = req.files[key];
+
+        let name = sampleFile.name;
+        let size = sampleFile.size;
+        let dataName = name;
+        let mime = sampleFile.mimetype;
+        let front_type = name.split('.')[1];
+
+
+        console.log(front_type)
+
+
+        // let data_real = "data:" + sampleFile.mimetype + ";charset=utf-8;base64," + sampleFile.data.toString('base64');
+        let data_real = sampleFile.data.toString('base64');
+>>>>>>> Stashed changes
 
     res.redirect('/room?code=' + code);
 
@@ -152,6 +170,12 @@ router.post('/upload', (req, res) => {
 });
 
 
+<<<<<<< Updated upstream
+=======
+        saveData(name,expire,code,size,mime,code,front_type);
+        res.redirect('/room');
+    });
+>>>>>>> Stashed changes
 
 function urltoFile(url, filename, mimeType){
     return (fetch(url)
@@ -183,7 +207,30 @@ router.get('/download/:id', (req,res) => {
         }catch{
         }
 
+<<<<<<< Updated upstream
         res.send(content);
+=======
+    File.findOne({_id: id}, function (err,file) {
+        let name = file.name;
+        var code = file.code
+
+        var s3Params = {
+            Bucket: code.toString(),
+            Key: file.name
+        };
+
+        s3.getObject(s3Params, function(err,data){
+            const url =unescape(encodeURIComponent( Buffer.from(data.Body)));
+            let content = Buffer.from(url, 'base64');
+            let temp = file.mime + ";charset=UTF-8";
+            res.set('Content-Type', temp);
+            try{
+                res.set('Content-Disposition','attachment; filename=' + file.name );
+            }catch{
+            }
+            res.send(content);
+        })
+>>>>>>> Stashed changes
 
     });
 
@@ -199,9 +246,21 @@ router.delete('/download', (req,res) => {
         let id = obj.id;
         let code = obj.code;
 
+        File.findOneAndRemove({ _id: id }, function (err, file) {
 
-        File.deleteOne({ _id: id }, function (err) {
-            if (err) return handleError(err);
+            if (err){
+                return handleError(err);
+            } else{
+                var code = file.code
+                var s3Params = {
+                    Bucket: code.toString(),
+                    Key: file.name
+                };
+
+                s3.deleteObject(s3Params, function(err, data) {
+                    if (err) console.log(err, err.stack);
+                });
+            }
         });
 
         Room.findOne({code: code}, function(err,doc){
@@ -229,13 +288,23 @@ function getDate(){
 }
 
 // Save data to DB
+<<<<<<< Updated upstream
 function saveData(data, name, expire,code,size){
+=======
+function saveData(name, expire,code,size, mime,code, front_type){
+>>>>>>> Stashed changes
     var file = new File();
     file.obj = data;
     file.name = name;
     file.createdAt.expires = expire.toString();
     file.date = Date();
     file.size = size;
+<<<<<<< Updated upstream
+=======
+    file.mime = mime;
+    file.code = code;
+    file.front_type = front_type
+>>>>>>> Stashed changes
 
 
     file.save(function (err, doc1){
