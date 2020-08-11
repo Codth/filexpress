@@ -5,6 +5,13 @@ const bodyparser = require('body-parser');
 var express = require('express');
 var app = express();
 var path = require('path');
+var flash = require('connect-flash');
+
+const passport = require('passport');
+const session = require('express-session');
+require('./config/passport')(passport);
+
+
 
 var server = require('http').createServer(app);
 var port = process.env.PORT || 3000;
@@ -22,6 +29,20 @@ const indexController = require('./controllers/indexController');
 
 // Add static media to the express
 app.use(express.static(__dirname + '/views/'));
+
+app.use(
+    session({
+        secret: 'secret',
+        resave: true,
+        saveUninitialized: true
+    })
+);
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
+
 app.use(fileUpload());
 app.use(bodyparser.urlencoded({
     extended: true

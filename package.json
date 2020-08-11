@@ -10,16 +10,23 @@
   "license": "ISC",
   "dependencies": {
     "atob": "^2.1.2",
+    "aws-sdk": "^2.730.0",
+    "bcryptjs": "^2.4.3",
     "blob": "^0.1.0",
     "body-parser": "^1.18.3",
     "bootstrap-select": "^1.13.17",
     "btoa-atob": "^0.1.2",
     "buffer": "^5.6.0",
+    "connect-flash": "^0.1.1",
     "express": "^4.16.4",
     "express-fileupload": "^1.1.7-alpha.3",
     "express-handlebars": "^3.0.0",
+    "express-session": "^1.17.1",
+    "filepond": "^4.18.0",
     "mongoose": "^5.9.20",
-    "multer": "^1.4.2"
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0",
+    "spark-md5": "^3.0.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"
