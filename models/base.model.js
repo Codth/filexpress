@@ -2,9 +2,6 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 var fileSchema = new mongoose.Schema({
-    obj: {
-        type: Object
-    },
     name: {
         type: String
     },
@@ -19,8 +16,11 @@ var fileSchema = new mongoose.Schema({
         expires: String,
         default: Date.now
     },
-    front_type:{
+    mime:{
         type: String
+    },
+    code:{
+        type: Number
     }
 });
 

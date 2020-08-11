@@ -9,6 +9,15 @@ const bcrypt = require('bcryptjs');
 const passport = require('passport');
 const { ensureAuthenticated, forwardAuthenticated } = require('../config/auth');
 
+var Readable = require('stream').Readable;
+
+
+const AWS = require('aws-sdk');
+var s3 = new AWS.S3();
+
+
+
+
 router.get('/',  forwardAuthenticated, (req, res) => {
     res.render("view/lobby", {
         viewTitle: "Lobby",
@@ -112,7 +121,8 @@ router.get('/room', ensureAuthenticated, (req, res) => {
 
 });
 
-router.post('/api', (req, res) => {
+
+router.post('/api', async (req, res) => {
     let code = req.user.code;
 
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -138,11 +148,44 @@ router.post('/api', (req, res) => {
 
     Object.keys(req.files).forEach(function(key) {
         var sampleFile = req.files[key];
-        let data = "data:" + sampleFile.mimetype + ";charset=utf-8;base64," + sampleFile.data.toString('base64');
+
         let name = sampleFile.name;
         let size = sampleFile.size;
+        let dataName = name;
+        let mime = sampleFile.mimetype;
 
-        saveData(data,name,expire,code,size);
+
+        // let data_real = "data:" + sampleFile.mimetype + ";charset=utf-8;base64," + sampleFile.data.toString('base64');
+        let data_real = sampleFile.data.toString('base64');
+
+        var bucketName = code;
+        var keyName = name;
+
+
+         s3.headBucket({ Bucket: bucketName}, function(err, data) {
+            if(err){
+                s3.createBucket({Bucket: bucketName}, function() {
+                    var params = {Bucket: bucketName, Key: keyName, Body: data_real};
+                    s3.putObject(params, function(err, data) {
+                        if (err)
+                            console.log(err)
+                        else
+                            console.log("Successfully uploaded data to " + bucketName + "/" + keyName);
+                    });
+                });
+            }else{
+                var params = {Bucket: bucketName, Key: keyName, Body: data_real};
+                s3.putObject(params, function(err, data) {
+                    if (err)
+                        console.log(err)
+                    else
+                        console.log("Successfully uploaded data to " + bucketName + "/" + keyName);
+                });
+            }
+        });
+
+
+        saveData(name,expire,code,size,mime,code);
         res.redirect('/room');
     });
 
@@ -160,26 +203,51 @@ router.get('/room/logout', (req, res) =>{
 
 router.get('/download/:id',ensureAuthenticated, (req,res) => {
     let id = req.params.id;
+
     File.findOne({_id: id}, function (err,file) {
-        let mime = file.obj.split(',')[0].split(':')[1].split(';')[0];
-        console.log(mime);
+        let name = file.name;
 
-        let content = unescape(encodeURIComponent(file.obj.split(',')[1]));
+        var stream = new Readable();
 
-        // content = new Buffer(content, 'base64');
-        content = Buffer.from(content, 'base64');
+        var s3Params = {
+            Bucket:'9219',
+            Key: file.name
+        };
 
-        let temp = mime + ";charset=UTF-8";
-        res.set('Content-Type', temp);
+        s3.getObject(s3Params, function(err,data){
+            const url =unescape(encodeURIComponent( Buffer.from(data.Body)));
+            let content = Buffer.from(url, 'base64');
+            let temp = file.mime + ";charset=UTF-8";
+            res.set('Content-Type', temp);
+            try{
+                res.set('Content-Disposition','attachment; filename=' + file.name );
+            }catch{
+            }
+            res.send(content);
+        })
 
-        console.log(file.name);
 
-        try{
-            res.set('Content-Disposition','attachment; filename=' + file.name );
-        }catch{
-        }
-
-        res.send(content);
+        //
+        // console.log(file)
+        // let mime = file.obj.split(',')[0].split(':')[1].split(';')[0];
+        // console.log(mime);
+        //
+        // let content = unescape(encodeURIComponent(file.obj.split(',')[1]));
+        //
+        // // content = new Buffer(content, 'base64');
+        // content = Buffer.from(content, 'base64');
+        //
+        // let temp = mime + ";charset=UTF-8";
+        // res.set('Content-Type', temp);
+        //
+        // console.log(file.name);
+        //
+        // try{
+        //     res.set('Content-Disposition','attachment; filename=' + file.name );
+        // }catch{
+        // }
+        //
+        // res.send(content);
 
     });
 
@@ -226,15 +294,15 @@ function getDate(){
 
 
 // Save data to DB
-function saveData(data, name, expire,code,size){
+function saveData(name, expire,code,size, mime,code){
     var file = new File();
 
-    file.obj = data;
     file.name = name;
     file.createdAt.expires = expire.toString();
     file.date = Date();
     file.size = size;
-    file.front_type = name.split(".")[1];
+    file.mime = mime;
+    file.code = code;
 
 
     file.save(function (err, doc1){
