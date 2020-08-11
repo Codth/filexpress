@@ -29,6 +29,9 @@ var fileSchema = new mongoose.Schema({
     },
     front_type:{
         type: String
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     }
 });

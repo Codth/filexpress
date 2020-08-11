@@ -171,7 +171,10 @@ router.post('/upload', (req, res) => {
 
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
         saveData(name,expire,code,size,mime,code,front_type);
         res.redirect('/room');
     });
@@ -230,6 +233,9 @@ router.get('/download/:id', (req,res) => {
             }
             res.send(content);
         })
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
     });
@@ -247,6 +253,7 @@ router.delete('/download', (req,res) => {
         let code = obj.code;
 
         File.findOneAndRemove({ _id: id }, function (err, file) {
+<<<<<<< Updated upstream
 
             if (err){
                 return handleError(err);
@@ -257,6 +264,18 @@ router.delete('/download', (req,res) => {
                     Key: file.name
                 };
 
+=======
+
+            if (err){
+                return handleError(err);
+            } else{
+                var code = file.code
+                var s3Params = {
+                    Bucket: code.toString(),
+                    Key: file.name
+                };
+
+>>>>>>> Stashed changes
                 s3.deleteObject(s3Params, function(err, data) {
                     if (err) console.log(err, err.stack);
                 });
@@ -289,7 +308,11 @@ function getDate(){
 
 // Save data to DB
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 function saveData(data, name, expire,code,size){
+=======
+function saveData(name, expire,code,size, mime,code, front_type){
+>>>>>>> Stashed changes
 =======
 function saveData(name, expire,code,size, mime,code, front_type){
 >>>>>>> Stashed changes
@@ -304,6 +327,9 @@ function saveData(name, expire,code,size, mime,code, front_type){
     file.mime = mime;
     file.code = code;
     file.front_type = front_type
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
 
